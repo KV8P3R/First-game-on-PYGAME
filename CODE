@@ -1,0 +1,119 @@
+import pygame
+import sys
+import os
+
+pygame.init()
+
+font = pygame.font.SysFont("Arial", 80)
+WIDTH = 900
+HEIGHT = 800
+
+window = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Game")
+
+clock = pygame.time.Clock()
+
+# player
+player = pygame.Rect(80, 80, 35, 35)
+spawn_x, spawn_y = 100, 100
+lives = 3
+dead = False
+player_speed_x = 0
+player_speed_y = 0
+max_jumps = 2
+jumps_count = 0
+gravity = 0.34
+jump_force = -10
+on_ground = False
+current_position = [100, 100]
+current_level = 0
+
+# platforms
+platforms = [
+    pygame.Rect(0, 550, 1200, 50),
+    pygame.Rect(300, 400, 400, 20),
+    pygame.Rect(589, 200, 400, 15),
+]
+
+running = True
+while running:
+    clock.tick(60)
+
+    # events
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE and jumps_count < max_jumps:
+                player_speed_y = jump_force
+                jumps_count += 1
+
+        # levels
+
+
+    def level_1():
+        global current_level
+        current_level = 1
+        player.y = 1230
+
+    # keys (left/right)
+    keys = pygame.key.get_pressed()
+    player_speed_x = 0
+    if keys[pygame.K_LEFT]:
+        player_speed_x = -6
+    if keys[pygame.K_RIGHT]:
+        player_speed_x = 6
+    if keys[pygame.K_LSHIFT]:
+        player_speed_x *= 1.5
+    if player.y >= 1230:
+        level_1()
+
+    # physics
+    player_speed_y += gravity
+    player.x += player_speed_x
+    player.y += player_speed_y
+
+    # Lives and respawn
+    if player.y > 600 or player.y < -600:
+        lives -= 1
+        player.x = spawn_x
+        player.y = spawn_y
+
+    if lives <= 0:
+        dead = True
+
+    # collision
+    on_ground = False
+    for p in platforms:
+        if player.colliderect(p):
+            if player_speed_y > 0:  # falling
+                player.bottom = p.top
+                player_speed_y = 0
+                on_ground = True
+                jumps_count = 0   # jumps reset
+
+            
+
+    # drawing
+    window.fill((20, 20, 20))
+    pygame.draw.rect(window, (0, 200, 200), player)
+    for p in platforms:
+        pygame.draw.rect(window, (200, 200, 200), p)
+
+    # GAME OVER
+    if dead:
+        text = font.render("GAME OVER", True, (255, 0, 255))
+        window.blit(text, (WIDTH/2 - text.get_width()/2, HEIGHT/2 - text.get_height()/2))
+        pygame.display.update()
+        pygame.time.delay(3000)
+        pygame.quit()
+        sys.exit()
+
+    # Number of lives
+    text = font.render(f"Lives: {lives}", True,  (255, 0, 255))
+    window.blit(text, (10, 10))
+    level = font.render(f"Level: {current_level}", True, (255, 0, 255))
+    window.blit(level, (10, 73))
+
+    pygame.display.flip()
